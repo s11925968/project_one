@@ -1,42 +1,68 @@
-import axios from 'axios';
-import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import Loader from './Loader.jsx';
-
-export default function Index() {
-
-  const [users,setUsers]=useState([]);
+import axios from "axios";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "react-toastify";
+import { validationUserData } from "../../validation/uservalidation.js";
+import Loader from "./Loader.jsx"
+export default function Update() {
+  const navigite=useNavigate();
   let [loeader,setLoeader] = useState(false);
-  const getUsers=async ()=>{
-    const {data}=await axios.get("https://crud-users-gold.vercel.app/users");
-    setUsers(data.users);
-    setLoeader(false);
-  }
-  const deleteUser=async (id)=>{
-    setLoeader(true);
-    const {data}=await axios.delete(`https://crud-users-gold.vercel.app/users/${id}`);
-      if (data.message == "success") {
-        toast.success("done!");
-        setLoeader(false);
-        getUsers();
-      }
-  }
 
+  let [errorBack,setErrorBack]=useState('');
+
+  let [error,setError]=useState({
+    name:'',
+    email:'',
+    password:'',
+  });
+  let [user,setUser]=useState({
+    name:'',
+    email:'',
+    password:'',
+  });
+
+  const changeName=(e)=>{
+    const {name,value}=e.target;
+    setUser({...user,[name]:value});
+    console.log(user);
+  }
+  const {id}=useParams('id');
+  const getUsers=async ()=>{
+    const {data}=await axios.get(`https://crud-users-gold.vercel.app/users/${id}`);
+    setUser(data.user);
+  }
   useEffect(()=>{
-    setLoeader(true);
     getUsers();
   },[]);
-// useEffect(()=>{
-//   getUsers();
-//   },[users]);
+  const sendData=async (e)=>{
+    e.preventDefault();
+    setLoeader(true);
+    if(Object.keys(validationUserData(user)).length>0){
+      setError(validationUserData(user));
+    }else{
+      try{
+        const {data}=await axios.put(`https://crud-users-gold.vercel.app/users/${id}`,user);
+        if(data.message=='success'){
+          toast.success('done!');
+          navigite('/users/index');
+          setLoeader(false);
+        }
+      }catch(error){
+        //console.log();
+        setErrorBack(error.response.data.message);
+        setLoeader(false);
+      }
+      
+    }
+  
+  }
   if(loeader){
     return(
       <Loader />
     )
   }
-    return (
-    <>
+  return (
+    <div>
       <div className="container-fluid">
         <div className="row flex-nowrap">
           <div className="col-auto col-md-3 col-xl-2 px-sm-2 px-0 bg-dark">
@@ -213,41 +239,61 @@ export default function Index() {
             </div>
           </div>
           <div className="col py-3">
-          <table className="table">
-  <thead>
-    <tr>
-      <th scope="col">Id</th>
-      <th scope="col">name</th>
-      <th scope="col">Email</th>
-      <th scope="col">password</th>
-    </tr>
-  </thead>
-  <tbody>
-    {
-      users.length>0?users.map((user,index)=>{
-        return(
-          <React.Fragment key={user._id}>
-            <tr>
-              <td>{index}</td>
-              <td>{user.name}</td>
-              <td>{user.email}</td>
-              <td>{user.password}</td>
-              <td onClick={()=>deleteUser(user._id)}>delete</td>
-              <td><Link to={`/users/${user._id}`}>details</Link></td>
-              <td><Link to={`/users/edit/${user._id}`}>edit</Link></td>
+            {errorBack && <p className='text text-danger'>{errorBack}</p>}
+            <form onSubmit={sendData}>
+              <div className="mb-3">
+                <label htmlFor="userName">userName</label>
+                <input
+                  name="name"
+                  type="text"
+                  className="form-control"
+                  id="userName"
+                  placeholder="user name"
+                  value={user.name}
+                  onChange={()=>{
+                    changeName(event)
+                  }}
+                />
+                {error.name && <p className="text-danger">{error.name}</p>}
+              </div>
+              <div className="mb-3">
+                <label htmlFor="Email">Email address</label>
+                <input
+                  name="email"
+                  type="email"
+                  className="form-control"
+                  id="Email"
+                  value={user.email}
+                  onChange={()=>{
+                    changeName(event)
+                  }}
+                  
+                />
+                {error.email && <p className="text-danger">{error.email}</p>}
 
-            </tr>
-          </React.Fragment>
-        )
-      }):<h2>no user data</h2>
-    }
-    
-  </tbody>
-</table>
+              </div>
+              <div className="mb-3">
+                <label htmlFor="password">password</label>
+                <input
+                  name="password"
+                  type="password"
+                  className="form-control"
+                  id="password"
+                  value={user.password}
+                  onChange={()=>{
+                    changeName(event);
+                  }}
+                />
+                {error.password && <p className="text-danger">{error.password}</p>}
+
+              </div>
+              <button type="submit"  className="btn btn-primary">
+                Submit
+              </button>
+            </form>
           </div>
-          &nbsp;&nbsp;&nbsp;
         </div>
       </div>
-    </>
+    </div>
   );
 }

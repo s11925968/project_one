@@ -4,6 +4,7 @@ import Index from './compount/user/Index.jsx'
 import Creat from './compount/user/Creat.jsx'
 import Details from './compount/user/Details.jsx'
 import Navbar from './compount/navbar/Navbar.jsx'
+import Update from './compount/user/Update.jsx'
 
 export default function App() {
   return (
@@ -13,8 +14,8 @@ export default function App() {
       <Route path="/users/index" element={<Index />}/>
       <Route path="/users/creat" element={<Creat />}/>
       <Route path="/users/:id" element={<Details />}/>
+      <Route path="/users/edit/:id" element={<Update />}/>
     </Routes>
     </div>
-    
   )
 }
